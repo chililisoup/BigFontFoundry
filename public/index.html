@@ -7,18 +7,21 @@
         <script src="script.js" defer></script>
     </head>
     <body>
+        <header>
+            <span>
+                <label for="upload">Font Image</label>
+                <input id="upload" type="file" accept="image/png" />
+                <label for="order">Custom Font Order</label>
+                <input id="order" type="file" accept=".txt" />
+                <label for="width">Width</label>
+                <input id="width" type="number" value="6" min="1"/>
+                <label for="height">Height</label>
+                <input id="height" type="number" value="4" min="1"/>
+                <button onclick="downloadFont()">Download font</button>
+            </span>
+        </header>
         <div>
-            <label for="upload">Font Image</label>
-            <input id="upload" type="file" accept="image/png" />
-            <label for="order">Custom Font Order</label>
-            <input id="order" type="file" accept=".txt" />
-            <label for="width">Width</label>
-            <input id="width" type="number" value="6" min="1"/>
-            <label for="height">Height</label>
-            <input id="height" type="number" value="4" min="1"/>
-            <button onclick="downloadFont()">Download font</button>
+            <canvas id="preview" height="1"></canvas>
         </div>
-        <hr />
-        <canvas id="preview"></canvas>
     </body>
 </html>

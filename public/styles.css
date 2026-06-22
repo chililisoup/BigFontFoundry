@@ -1,4 +1,48 @@
+:root {
+  --crust: #181926;
+  --mantle: #1e2030;
+  --base: #24273a;
+  --text: #cad3f5;
+  --lavender: #b7bdf8;
+  --blue: #8aadf4;
+
+  --shadow: rgb(from var(--crust) r g b / 50%);
+
+  --text-filter: brightness(0) saturate(100%) invert(83%) sepia(14%) saturate(539%) hue-rotate(193deg) brightness(101%) contrast(92%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Noto Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html, body {
+  background-color: var(--base);
+  color: var(--text);
+}
+
+header, div {
+  margin: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px var(--shadow);
+}
+
+header {
+  margin-bottom: 32px;
+  border-bottom: 4px solid var(--blue);
+  background-color: var(--crust);
+}
+
+div {
+  border-bottom: 4px solid var(--lavender);
+  background-color: var(--mantle);
+}
+
+
 canvas {
   image-rendering: pixelated;
+  filter: var(--text-filter);
   width: 100%;
 }
