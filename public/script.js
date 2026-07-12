@@ -68,7 +68,7 @@ document.addEventListener('mousemove', e => {
     );
 
     const left = (cx * scale + rect.left);
-    const top = (cy * scale + rect.top);
+    const top = (cy * scale + rect.top) + window.scrollY;
 
     hoveredInfo.style.left = (left - 30) + 'px';
     hoveredInfo.style.top = (top - 30) + 'px';

@@ -283,5 +283,7 @@ function processLine(line) {
     processed = processed.replaceAll(/(\u193A|\u073C\u073C){2}/g, ' ');
     processed = processed.replaceAll(/\u00A0\u00A0(\u193A|\u073C\u073C)/g, '   ');
     processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0\u00A0/g, '   ');
+    processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0(\u193A|\u073C\u073C)/g, '  ');
+    
     return processed;
 }
