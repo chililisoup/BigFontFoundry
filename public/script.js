@@ -20,9 +20,11 @@ let imageData = false;
 
 document.querySelector('#upload').addEventListener('change', e => {
     if (!e.target.files) return;
+    
     name = e.target.files[0].name.replace(/\.[^/.]+$/, '');
     snake_name = name.toLowerCase().replaceAll(' ', '_');
     loadImage(URL.createObjectURL(e.target.files[0]));
+
     e.target.value = '';
 });
 
@@ -35,6 +37,8 @@ document.querySelector('#order').addEventListener('change', e => {
         processFont();
     };
     reader.readAsText(e.target.files[0]);
+
+    e.target.value = '';
 });
 
 document.querySelector('#width').addEventListener('change', e => {
@@ -182,7 +186,10 @@ function getCharAt(x, y) {
     const cx = Math.floor(x / characterWidth);
     const cy = Math.floor(y / (characterHeight * 4));
     const line = order[cy];
-    return line != null ? line[cx] : null;
+
+    return line != null ?
+            (line[cx] != ' ' ? line[cx] : null) :
+            null;
 }
 
 function getCharPoint(x, y) {
@@ -217,6 +224,24 @@ function getCharMask(cx, cy) {
     return getMaskX(cx) & getMaskY(cy);
 }
 
+function getMaskColumn(cx) {
+    return internalAlignmentX(cx) % 2;
+}
+
+function lineIndex(cx) {
+    return Math.floor(internalAlignmentX(cx) / 2);
+}
+
+function internalAlignmentX(cx) {
+    if (characterWidth % 2 == 0)
+        return cx;
+
+    if (cx > (characterWidth - 1) / 2) cx++;
+    if ((characterWidth - 1) % 4 != 0 && cx > 0) cx++;
+
+    return cx;
+}
+
 function createEmptyChar() {
     const charPixels = [];
     for (let i = 0; i < characterHeight; i++) {
@@ -229,19 +254,6 @@ function createEmptyChar() {
         charPixels[i] = line;
     }
     return charPixels;
-}
-
-function lineIndex(cx) {
-    if (characterWidth % 2 == 0)
-        return Math.floor(cx / 2);
-
-    if (cx > (characterWidth - 1) / 2) cx++;
-
-    if ((characterWidth - 1) % 4 == 0)
-        return Math.floor(cx / 2);
-
-    if (cx > 0) cx++;
-    return Math.floor(cx / 2);
 }
 
 function isHalfSize(cx) {
@@ -262,13 +274,15 @@ function fillCharPixel(x, y) {
 
     let charPixels = chars[char] ?? createEmptyChar();
     const [cx, cy] = getCharPoint(x, y);
-    const mask = isHalfSize(cx) ?
-            getHalfMaskY(cy % 4) :
-            getCharMask(cx % 2, cy % 4);
     const line = charPixels[Math.floor(cy / 4)];
     if (line == null) return;
-    line[lineIndex(cx)][0] |= mask;
 
+    const i = lineIndex(cx);
+    const mask = line[i][1] ?
+            getCharMask(getMaskColumn(cx), cy % 4) :
+            getHalfMaskY(cy % 4);
+
+    line[i][0] |= mask;
     chars[char] = charPixels;
 }
 

@@ -276,7 +276,7 @@ const octant_map = {
 };
 
 const half_octant_map = {
-    0b0000: "\u193A\u193A\u193A",
+    0b0000: "\u073C\u073C\u073C",
     0b0001: "𜺣",
     0b0010: "𜴉",
     0b0011: "▖",
@@ -302,9 +302,11 @@ function processLine(line) {
     }
     
     processed = processed.replaceAll(/(\u193A|\u073C\u073C){2}/g, ' ');
+    processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0(\u193A|\u073C\u073C)/g, '  ');
+    processed = processed.replaceAll(/( |\u00A0)\u073C(?!\1)( |\u00A0)/g, '  ');
     processed = processed.replaceAll(/\u00A0\u00A0(\u193A|\u073C\u073C)/g, '   ');
     processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0\u00A0/g, '   ');
-    processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0(\u193A|\u073C\u073C)/g, '  ');
+    processed = processed.replaceAll(/\u073C | \u073C/g, ' ');
     
     return processed;
 }
