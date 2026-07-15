@@ -275,10 +275,31 @@ const octant_map = {
     0b11_11_11_11: "▌"
 };
 
+const half_octant_map = {
+    0b0000: "\u193A\u193A\u193A",
+    0b0001: "𜺣",
+    0b0010: "𜴉",
+    0b0011: "▖",
+    0b0100: "𜴀",
+    0b0101: "𜴹",
+    0b0110: "🯦",
+    0b0111: "𜵈",
+    0b1000: "𜺨",
+    0b1001: "𜴶",
+    0b1010: "𜴊",
+    0b1011: "𜵅",
+    0b1100: "▘",
+    0b1101: "𜴺",
+    0b1110: "𜴍",
+    0b1111: "𜷴"
+};
+
 function processLine(line) {
     let processed = "";
-    for (const block of line)
-        processed += octant_map[block] ?? octant_map[0b00_00_00_00];
+    for (const block of line) {
+        const used_map = block[1] ? octant_map : half_octant_map;
+        processed += used_map[block[0]] ?? used_map[0];
+    }
     
     processed = processed.replaceAll(/(\u193A|\u073C\u073C){2}/g, ' ');
     processed = processed.replaceAll(/\u00A0\u00A0(\u193A|\u073C\u073C)/g, '   ');

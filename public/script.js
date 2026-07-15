@@ -1,4 +1,4 @@
-let characterWidth = 6;
+let characterWidth = 12;
 let characterHeight = 4;
 let order = [
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -13,11 +13,15 @@ const hoveredHighlight = document.querySelector('#hovered_highlight');
 
 let chars = {};
 let font = false;
+let name = 'My Cool Font';
+let snake_name = 'my_cool_font';
 
 let imageData = false;
 
 document.querySelector('#upload').addEventListener('change', e => {
     if (!e.target.files) return;
+    name = e.target.files[0].name.replace(/\.[^/.]+$/, '');
+    snake_name = name.toLowerCase().replaceAll(' ', '_');
     loadImage(URL.createObjectURL(e.target.files[0]));
     e.target.value = '';
 });
@@ -63,7 +67,7 @@ document.addEventListener('mousemove', e => {
     const scale = rect.width / previewCanvas.width;
 
     const [cx, cy] = transformPoint(
-        Math.floor(point[0] / (characterWidth * 2)) * (characterWidth * 2),
+        Math.floor(point[0] / characterWidth) * characterWidth,
         Math.floor(point[1] / (characterHeight * 4)) * (characterHeight * 4)
     );
 
@@ -75,8 +79,8 @@ document.addEventListener('mousemove', e => {
 
     hoveredHighlight.style.left = left + 'px';
     hoveredHighlight.style.top = top + 'px';
-    hoveredHighlight.style.width = ((characterWidth * 5 - 1) * scale) + 'px';
-    hoveredHighlight.style.height = ((characterHeight * 10 - 2) * scale) + 'px';
+    hoveredHighlight.style.width = (previewCharacterWidth() * scale) + 'px';
+    hoveredHighlight.style.height = (previewCharacterHeight() * scale) + 'px';
 });
 
 function getHoverPoint(clientX, clientY) {
@@ -109,7 +113,10 @@ function processFont() {
     };
     const data = imageData.data;
 
-    let [previewWidth, previewHeight] = transformPoint(imageData.width - 1, imageData.height - 1);
+    let [previewWidth, previewHeight] = transformPoint(
+        Math.ceil(imageData.width / characterWidth) * characterWidth - 1,
+        imageData.height - 1
+    );
     previewWidth += 2;
     previewHeight += 2;
     previewCanvas.width = previewWidth;
@@ -150,8 +157,21 @@ function processFont() {
         processedChars[char] = charPixels.map(line => processLine(line));
     });
 
+    if (Object.keys(processedChars).length === 2) {
+        delete processedChars[' '];
+        const symbols = {};
+        symbols[snake_name] = Object.values(processedChars)[0];
+
+        font = {
+            name: name,
+            symbols: symbols
+        };
+
+        return;
+    }
+
     font = {
-        name: 'My Cool Font',
+        name: name,
         height: characterHeight,
         characterSeparator: '',
         characters: processedChars
@@ -159,14 +179,14 @@ function processFont() {
 }
 
 function getCharAt(x, y) {
-    const cx = Math.floor(x / (characterWidth * 2));
+    const cx = Math.floor(x / characterWidth);
     const cy = Math.floor(y / (characterHeight * 4));
     const line = order[cy];
     return line != null ? line[cx] : null;
 }
 
 function getCharPoint(x, y) {
-    return [x % (characterWidth * 2), y % (characterHeight * 4)];
+    return [x % characterWidth, y % (characterHeight * 4)];
 }
 
 function getMaskY(oy) {
@@ -184,6 +204,15 @@ function getMaskX(ox) {
         0b01_01_01_01;
 }
 
+function getHalfMaskY(oy) {
+    switch (oy) {
+        case 0: return 0b1000;
+        case 1: return 0b0100;
+        case 2: return 0b0010;
+        default: return 0b0001;
+    }
+}
+
 function getCharMask(cx, cy) {
     return getMaskX(cx) & getMaskY(cy);
 }
@@ -192,10 +221,39 @@ function createEmptyChar() {
     const charPixels = [];
     for (let i = 0; i < characterHeight; i++) {
         const line = [];
-        for (let j = 0; j < characterWidth; j++) line[j] = 0b00_00_00_00;
+        for (let j = 0; j < characterWidth; j++) {
+            const isFullSize = !isHalfSize(j);
+            line.push([0, isFullSize]);
+            if (isFullSize) j++;
+        }
         charPixels[i] = line;
     }
     return charPixels;
+}
+
+function lineIndex(cx) {
+    if (characterWidth % 2 == 0)
+        return Math.floor(cx / 2);
+
+    if (cx > (characterWidth - 1) / 2) cx++;
+
+    if ((characterWidth - 1) % 4 == 0)
+        return Math.floor(cx / 2);
+
+    if (cx > 0) cx++;
+    return Math.floor(cx / 2);
+}
+
+function isHalfSize(cx) {
+    if (characterWidth % 2 == 0)
+        return false;
+
+    const isCenter = cx == (characterWidth - 1) / 2;
+
+    if ((characterWidth - 1) % 4 == 0)
+        return isCenter;
+
+    return isCenter || cx == 0 || cx == characterWidth - 1;
 }
 
 function fillCharPixel(x, y) {
@@ -204,10 +262,12 @@ function fillCharPixel(x, y) {
 
     let charPixels = chars[char] ?? createEmptyChar();
     const [cx, cy] = getCharPoint(x, y);
-    const mask = getCharMask(cx % 2, cy % 4);
+    const mask = isHalfSize(cx) ?
+            getHalfMaskY(cy % 4) :
+            getCharMask(cx % 2, cy % 4);
     const line = charPixels[Math.floor(cy / 4)];
     if (line == null) return;
-    line[Math.floor(cx / 2)] |= mask;
+    line[lineIndex(cx)][0] |= mask;
 
     chars[char] = charPixels;
 }
@@ -216,31 +276,42 @@ function transformPoint(x, y) {
     let tx = x * 2;
     let ty = y * 2;
 
-    tx += Math.floor(x / 2);
+    const cx = x % characterWidth;
+    const charCount = Math.floor(x / characterWidth);
+    tx += lineIndex(cx) + lineIndex(characterWidth - 1) * charCount;
+
     ty += Math.floor(y / 4) * 2;
 
-    tx += Math.floor(x / (characterWidth * 2)) * 6;
+    tx += charCount * 6;
     ty += Math.floor(y / (characterHeight * 4)) * 12;
 
     return [tx, ty];
 }
 
 function transformPointInverse(tx, ty) {
-    const chw = characterWidth * 5 - 1;
-    const chh = characterHeight * 10 - 2;
+    const chw = previewCharacterWidth();
+    const chh = previewCharacterHeight();
 
-    const chx = (tx % (chw + 7)) / chw;
+    const chx = (tx % (chw + 6)) / chw;
     if (chx >= 1 || chx < 0) return null;
     const chy = (ty % (chh + 14)) / chh;
     if (chy >= 1 || chy < 0) return null;
 
-    const px = Math.floor(tx / (chw + 7)) + chx;
+    const px = Math.floor(tx / (chw + 6)) + chx;
     const py = Math.floor(ty / (chh + 14)) + chy;
 
-    const x = Math.floor(px * characterWidth * 2);
+    const x = Math.floor(px * characterWidth);
     const y = Math.floor(py * characterHeight * 4);
 
     return [x, y];
+}
+
+function previewCharacterWidth() {
+    return characterWidth * 2 + lineIndex(characterWidth - 1);
+}
+
+function previewCharacterHeight() {
+    return characterHeight * 10 - 2
 }
 
 function getIndex(x, y, width) {
@@ -271,18 +342,13 @@ async function loadImageUrl(imageUrl) {
 const downloadFont = async () => {
     if (!font) return;
 
-    const filename = 'mycoolfont.json'
-
-    const name = window.prompt('Download as...', filename.substring(0, filename.lastIndexOf('.')));
-    if (name === null) return;
-
-    font.name = name;
+    const filename = snake_name + '.json';
     const content = JSON.stringify(font, null, 2);
 
     const link = document.createElement('a');
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
     link.href = url;
-    link.download = name + filename.substring(filename.lastIndexOf('.'));
+    link.download = filename;
 
     link.click();
     URL.revokeObjectURL(url);
