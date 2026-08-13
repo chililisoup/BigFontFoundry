@@ -21,6 +21,7 @@ let imageData = false;
 let yPad = 10;
 
 const hotelRoomNumberRegex = /("\d+":)/g;
+const needsEscapeRegex = /\\|"/;
 
 document.querySelector('#upload').addEventListener('change', e => {
     if (!e.target.files) return;
@@ -395,7 +396,7 @@ function assignCharKeys(content) {
         if (!hotelRoomNumberRegex.test(part)) continue;
         const roomNumber = part.slice(1, -2);
         const charKey = getCharFromHotelRoomNumber(roomNumber) ?? roomNumber;
-        split[i] = `"${charKey}":`;
+        split[i] = `"${needsEscapeRegex.test(charKey) ? '\\' : ''}${charKey}":`;
     }
 
     return split.join('');
