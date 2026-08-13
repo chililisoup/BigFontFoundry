@@ -386,10 +386,13 @@ async function loadImageUrl(imageUrl) {
     });
 }
 
-function assignCharKeys(content) {
-    if (symbols_mode) return content;
+function processSerializedFont(content) {
+    const processed = content
+            .replaceAll('\u073C', '\\u073C')
+            .replaceAll('\u193A', '\\u193A');
+    if (symbols_mode) return processed;
     
-    const split = content.split(hotelRoomNumberRegex);
+    const split = processed.split(hotelRoomNumberRegex);
 
     for (let i = 0; i < split.length; i++) {
         const part = split[i];
@@ -406,7 +409,7 @@ const downloadFont = async () => {
     if (!font) return;
 
     const filename = snake_name + '.json';
-    const content = assignCharKeys(JSON.stringify(font, null, 2));
+    const content = processSerializedFont(JSON.stringify(font, null, 2));
 
     const link = document.createElement('a');
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
