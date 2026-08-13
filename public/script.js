@@ -15,6 +15,7 @@ let chars = {};
 let font = false;
 let name = 'My Cool Font';
 let snake_name = 'my_cool_font';
+let symbols_mode = false;
 
 let imageData = false;
 
@@ -26,6 +27,11 @@ document.querySelector('#upload').addEventListener('change', e => {
     loadImage(URL.createObjectURL(e.target.files[0]));
 
     e.target.value = '';
+});
+
+document.querySelector('#symbols_mode').addEventListener('change', e => {
+    symbols_mode = e.target.checked;
+    processFont();
 });
 
 document.querySelector('#order').addEventListener('change', e => {
@@ -112,9 +118,7 @@ async function loadImage(imageUrl) {
 
 function processFont() {
     if (!imageData) return;
-    chars = {
-        ' ': createEmptyChar()
-    };
+    chars = symbols_mode ? {} : { ' ': createEmptyChar() };
     const data = imageData.data;
 
     let [previewWidth, previewHeight] = transformPoint(
@@ -185,8 +189,9 @@ function processFont() {
 function getCharAt(x, y) {
     const cx = Math.floor(x / characterWidth);
     const cy = Math.floor(y / (characterHeight * 4));
-    const line = order[cy];
+    if (symbols_mode) return `${cy * 100 + cx}`;
 
+    const line = order[cy];
     return line != null ?
             (line[cx] != ' ' ? line[cx] : null) :
             null;
