@@ -300,13 +300,6 @@ function processLine(line) {
         const used_map = block[1] ? octant_map : half_octant_map;
         processed += used_map[block[0]] ?? used_map[0];
     }
-    
-    processed = processed.replaceAll(/(\u193A|\u073C\u073C){2}/g, ' ');
-    processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0(\u193A|\u073C\u073C)/g, '  ');
-    processed = processed.replaceAll(/( |\u00A0)\u073C(?!\1)( |\u00A0)/g, '  ');
-    processed = processed.replaceAll(/\u00A0\u00A0(\u193A|\u073C\u073C)/g, '   ');
-    processed = processed.replaceAll(/(\u193A|\u073C\u073C)\u00A0\u00A0/g, '   ');
-    processed = processed.replaceAll(/\u073C | \u073C/g, ' ');
-    
-    return processed;
+
+    return cleanupDots(processed);
 }

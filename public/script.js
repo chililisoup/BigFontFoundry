@@ -165,7 +165,8 @@ function processFont() {
         processedChars[char] = charPixels.map(line => processLine(line));
     });
 
-    if (Object.keys(processedChars).length === 2) {
+    const keyCount = Object.keys(processedChars).length;
+    if ((symbols_mode && keyCount === 1) || (!symbols_mode && keyCount === 2)) {
         delete processedChars[' '];
         const symbols = {};
         symbols[snake_name] = Object.values(processedChars)[0];
@@ -182,7 +183,7 @@ function processFont() {
         name: name,
         height: characterHeight,
         characterSeparator: '',
-        characters: processedChars
+        [symbols_mode ? "symbols" : "characters"]: processedChars
     };
 }
 
