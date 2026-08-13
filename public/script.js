@@ -1,11 +1,12 @@
-let characterWidth = 12;
-let characterHeight = 4;
+let symbols_mode = document.querySelector('#symbols_mode').checked;
 let order = [
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
     'abcdefghijklmnopqrstuvwxyz',
     '`1234567890-=[],./\\;\'',
     '~!@#$%^&*()_+{}<>?|:"'
 ];
+let characterWidth = document.querySelector('#width').value;
+let characterHeight = document.querySelector('#height').value;
 
 const previewCanvas = document.querySelector('#preview');
 const hoveredInfo = document.querySelector('#hovered_info');
@@ -15,9 +16,11 @@ let chars = {};
 let font = false;
 let name = 'My Cool Font';
 let snake_name = 'my_cool_font';
-let symbols_mode = false;
 
 let imageData = false;
+let yPad = 10;
+
+const hotelRoomNumberRegex = /("\d+":)/g;
 
 document.querySelector('#upload').addEventListener('change', e => {
     if (!e.target.files) return;
@@ -118,8 +121,9 @@ async function loadImage(imageUrl) {
 
 function processFont() {
     if (!imageData) return;
-    chars = symbols_mode ? {} : { ' ': createEmptyChar() };
+    chars = symbols_mode ? {} : { '0': createEmptyChar() };
     const data = imageData.data;
+    yPad = Math.pow(10, Math.floor(Math.log10(Math.ceil(imageData.width / characterWidth))) + 1);
 
     let [previewWidth, previewHeight] = transformPoint(
         Math.ceil(imageData.width / characterWidth) * characterWidth - 1,
@@ -183,19 +187,41 @@ function processFont() {
         name: name,
         height: characterHeight,
         characterSeparator: '',
-        [symbols_mode ? "symbols" : "characters"]: processedChars
+        [symbols_mode ? 'symbols' : 'characters']: processedChars
     };
 }
 
-function getCharAt(x, y) {
-    const cx = Math.floor(x / characterWidth);
-    const cy = Math.floor(y / (characterHeight * 4));
-    if (symbols_mode) return `${cy * 100 + cx}`;
-
+function getChar(cx, cy) {
     const line = order[cy];
     return line != null ?
             (line[cx] != ' ' ? line[cx] : null) :
             null;
+}
+
+function getCharFromHotelRoomNumber(roomNumber) {
+    roomNumber = Number(roomNumber);
+    if (roomNumber === 0) return ' ';
+    return Number.isFinite(roomNumber) ?
+            getChar(roomNumber % yPad - 1, Math.floor(roomNumber / yPad) - 1) :
+            null;
+}
+
+function getHotelRoomNumberAt(x, y) {
+    const [cx, cy] = getCharPos(x, y);
+    return `${(cy + 1) * yPad + cx + 1}`;
+}
+
+function getCharAt(x, y) {
+    if (symbols_mode) return getHotelRoomNumberAt(x, y);
+    const [cx, cy] = getCharPos(x, y);
+    return getChar(cx, cy);
+}
+
+function getCharPos(x, y) {
+    return [
+            Math.floor(x / characterWidth),
+            Math.floor(y / (characterHeight * 4))
+    ];
 }
 
 function getCharPoint(x, y) {
@@ -275,7 +301,7 @@ function isHalfSize(cx) {
 }
 
 function fillCharPixel(x, y) {
-    const char = getCharAt(x, y);
+    const char = getHotelRoomNumberAt(x, y);
     if (!char) return;
 
     let charPixels = chars[char] ?? createEmptyChar();
@@ -359,11 +385,27 @@ async function loadImageUrl(imageUrl) {
     });
 }
 
+function assignCharKeys(content) {
+    if (symbols_mode) return content;
+    
+    const split = content.split(hotelRoomNumberRegex);
+
+    for (let i = 0; i < split.length; i++) {
+        const part = split[i];
+        if (!hotelRoomNumberRegex.test(part)) continue;
+        const roomNumber = part.slice(1, -2);
+        const charKey = getCharFromHotelRoomNumber(roomNumber) ?? roomNumber;
+        split[i] = `"${charKey}":`;
+    }
+
+    return split.join('');
+}
+
 const downloadFont = async () => {
     if (!font) return;
 
     const filename = snake_name + '.json';
-    const content = JSON.stringify(font, null, 2);
+    const content = assignCharKeys(JSON.stringify(font, null, 2));
 
     const link = document.createElement('a');
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
