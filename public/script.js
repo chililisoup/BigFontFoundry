@@ -172,7 +172,7 @@ function processFont() {
 
     const keyCount = Object.keys(processedChars).length;
     if ((symbols_mode && keyCount === 1) || (!symbols_mode && keyCount === 2)) {
-        delete processedChars[' '];
+        delete processedChars['0'];
         const symbols = {};
         symbols[snake_name] = Object.values(processedChars)[0];
 
