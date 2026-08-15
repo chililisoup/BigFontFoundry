@@ -5,8 +5,8 @@ let order = [
     '`1234567890-=[],./\\;\'',
     '~!@#$%^&*()_+{}<>?|:"'
 ];
-let characterWidth = document.querySelector('#width').value;
-let characterHeight = document.querySelector('#height').value;
+let characterWidth = Number(document.querySelector('#width').value);
+let characterHeight = Number(document.querySelector('#height').value);
 
 const previewCanvas = document.querySelector('#preview');
 const hoveredInfo = document.querySelector('#hovered_info');
@@ -52,7 +52,7 @@ document.querySelector('#order').addEventListener('change', e => {
 });
 
 document.querySelector('#width').addEventListener('change', e => {
-    width = e.target.value;
+    width = Number(e.target.value);
     if (width != characterWidth) {
         characterWidth = width;
         processFont();
@@ -60,7 +60,7 @@ document.querySelector('#width').addEventListener('change', e => {
 });
 
 document.querySelector('#height').addEventListener('change', e => {
-    height = e.target.value;
+    height = Number(e.target.value);
     if (height != characterHeight) {
         characterHeight = height;
         processFont();
